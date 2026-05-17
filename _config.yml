@@ -67,7 +67,7 @@ friends: [
 
 comment:
    type: disqus
-   script: 'https://airclouds-blog.disqus.com/embed.js'
+   script: 'https://0ranan-blog.disqus.com/embed.js'
 
 donate:
   img: img/donate.jpg
