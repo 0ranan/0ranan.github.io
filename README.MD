@@ -30,6 +30,11 @@ docker compose exec dev npm run newblog
 docker compose exec dev hexo new "新文章标题"
 ```
 
+本地测试
+```bash
+docker compose exec dev hexo server
+```
+
 ## Hexo 常用命令
 
 启动服务器，默认访问网址为 http://localhost:4000/
