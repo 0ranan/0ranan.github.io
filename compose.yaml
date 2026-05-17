@@ -1,0 +1,14 @@
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    container_name: myblog-dev
+    environment:
+      - PATH=/app/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    volumes:
+      - .:/app
+    ports:
+      - "4000:4000" # 将主机的 4000 端口映射到容器的 4000 端口
+    stdin_open: true # 保持标准输入打开，允许交互式操作
+    tty: true # 分配一个伪终端，使容器支持交互式操作
