@@ -35,6 +35,15 @@ docker compose exec dev hexo new "新文章标题"
 docker compose exec dev hexo server
 ```
 
+本地构建并测试静态文件
+```bash
+docker compose exec dev bash -c '
+    hexo clean &&
+    npm run build && 
+    python3 -m http.server 4000 -d public/
+'
+```
+
 ## Hexo 常用命令
 
 启动服务器，默认访问网址为 http://localhost:4000/
