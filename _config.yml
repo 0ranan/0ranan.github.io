@@ -135,7 +135,7 @@ theme: hexo-theme-aircloud-master
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
-deploy:
-  type: git
-  repo: https://gitee.com/an-ran0/an-ran0.git
-  branch: master
+# deploy:
+#   type: git
+#   repo: https://gitee.com/an-ran0/an-ran0.git
+#   branch: master
