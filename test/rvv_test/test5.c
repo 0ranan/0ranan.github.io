@@ -3,57 +3,53 @@
 #include <riscv_vector.h>
 
 /**
- * @brief 使用RVV Intrinsic实现16位整数数组乘法 c = a * b
- * @param c 输出数组，存储计算结果（32位，防止溢出）
- * @param a 输入数组1（16位）
- * @param b 输入数组2（16位）
+ * @brief 使用RVV Intrinsic实现数组所有元素求和
+ * @param a 输入数组
  * @param n 数组元素个数
+ * @return 数组所有元素的和
  */
-void rvv_mul_int16_to_int32(int32_t *c, const int16_t *a, const int16_t *b, size_t n) {
+uint64_t rvv_sum_uint64(const uint64_t *a, size_t n) {
+    uint64_t sum = 0;
     // ====================== 学生编写代码区域 ======================
-    // 提示：使用vsetvl_e16m4配置，使用vwmul_vv_i16i32m4进行乘法运算
+    // 提示：使用vredsum_vs_u64m8_u64m1函数进行归约求和
+    // 函数原型：vuint64m1_t vredsum_vs_u64m8_u64m1(vuint64m1_t dest, vuint64m8_t vs2, vuint64m1_t vs1, size_t vl)
     
     
     
     // ====================== 学生编写代码区域结束 ======================
+    return sum;
 }
 
 // 标量实现（用于验证结果）
-void scalar_mul_int16_to_int32(int32_t *c, const int16_t *a, const int16_t *b, size_t n) {
+uint64_t scalar_sum_uint64(const uint64_t *a, size_t n) {
+    uint64_t sum = 0;
     for (size_t i = 0; i < n; i++) {
-        c[i] = (int32_t)a[i] * (int32_t)b[i];
+        sum += a[i];
     }
+    return sum;
 }
 
 int main() {
-    const size_t N = 20;
-    int16_t a[N], b[N];
-    int32_t c_rvv[N], c_scalar[N];
+    const size_t N = 100;
+    uint64_t a[N];
 
-    // 初始化测试数据
+    // 初始化测试数据（1到100）
     for (size_t i = 0; i < N; i++) {
-        a[i] = (int16_t)(i + 1);
-        b[i] = (int16_t)(i + 2);
+        a[i] = i + 1;
     }
 
     // 计算
-    rvv_mul_int16_to_int32(c_rvv, a, b, N);
-    scalar_mul_int16_to_int32(c_scalar, a, b, N);
+    uint64_t sum_rvv = rvv_sum_uint64(a, N);
+    uint64_t sum_scalar = scalar_sum_uint64(a, N);
 
     // 验证结果
-    int passed = 1;
-    printf("\n题目2：16位整数数组乘法（结果32位）\n");
-    printf("索引\t a[i]\t b[i]\t RVV结果\t 标量结果\n");
+    printf("\n题目5：数组求和（1到100）\n");
+    printf("RVV计算结果：%lu\n", sum_rvv);
+    printf("标量计算结果：%lu\n", sum_scalar);
+    printf("数学公式结果：%lu\n", (100 * 101) / 2);
     printf("----------------------------------------\n");
-    for (size_t i = 0; i < N; i++) {
-        printf("%zu\t %d\t %d\t %d\t\t %d\n", i, a[i], b[i], c_rvv[i], c_scalar[i]);
-        if (c_rvv[i] != c_scalar[i]) {
-            passed = 0;
-        }
-    }
 
-    printf("----------------------------------------\n");
-    if (passed) {
+    if (sum_rvv == sum_scalar && sum_rvv == 5050) {
         printf("✅ 测试通过！\n");
     } else {
         printf("❌ 测试失败！\n");
@@ -62,20 +58,11 @@ int main() {
     return 0;
 }
 
-/* 预期输出（前5行和最后5行）：
-索引    a[i]    b[i]    RVV结果         标量结果
-----------------------------------------
-0       1       2       2               2
-1       2       3       6               6
-2       3       4       12              12
-3       4       5       20              20
-4       5       6       30              30
-...
-15      16      17      272             272
-16      17      18      306             306
-17      18      19      342             342
-18      19      20      380             380
-19      20      21      420             420
+/* 预期输出：
+题目5：数组求和（1到100）
+RVV计算结果：5050
+标量计算结果：5050
+数学公式结果：5050
 ----------------------------------------
 ✅ 测试通过！
 */
