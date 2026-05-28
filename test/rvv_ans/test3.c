@@ -13,6 +13,26 @@ void rvv_add_float32(float *c, const float *a, const float *b, size_t n) {
     // ====================== 学生编写代码区域 ======================
     
     
+    // c = a - b 
+    // 创建向量寄存器
+    while(n){
+
+        size_t vl = __riscv_vsetvl_e32m8(n);
+        // 将数据转化为向量寄存器
+        vfloat32m8_t  va = __riscv_vle32_v_f32m8(a, vl);
+        vfloat32m8_t  vb = __riscv_vle32_v_f32m8(b, vl);
+
+        // 向量寄存器计算
+        vfloat32m8_t vc = __riscv_vfadd_vv_f32m8(va,vb,vl);
+
+        // 将数据转化为标量
+        __riscv_vse32_v_f32m8(c, vc, vl);
+        a+=vl ; 
+        b+=vl ; 
+        c+=vl ; 
+        n-=vl ;
+        printf("vl = %zu\n",vl) ;
+    }
     
     // ====================== 学生编写代码区域结束 ======================
 }
@@ -25,7 +45,7 @@ void scalar_add_float32(float *c, const float *a, const float *b, size_t n) {
 }
 
 int main() {
-    const size_t N = 12;
+    const size_t N = 101;
     float a[N], b[N], c_rvv[N], c_scalar[N];
 
     // 初始化测试数据

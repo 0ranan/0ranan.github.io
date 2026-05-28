@@ -13,7 +13,23 @@ void rvv_mul_scalar_uint64(uint64_t *c, const uint64_t *a, uint64_t scalar, size
     // ====================== 学生编写代码区域 ======================
     // 提示：使用vmul_vx_u64m8函数（vx表示向量×标量）
     
-    
+    // 创建向量寄存器
+    while(n){
+
+        size_t vl = __riscv_vsetvl_e64m8(n);
+        // 将数据转化为向量寄存器
+        vuint64m8_t  va = __riscv_vle64_v_u64m8(a, vl);
+
+        // 向量寄存器计算
+        vuint64m8_t vc = __riscv_vmul_vx_u64m8(va,scalar,vl);
+
+        // 将数据转化为标量
+        __riscv_vse64_v_u64m8(c, vc, vl);
+        a+=vl ; 
+        c+=vl ; 
+        n-=vl ;
+        printf("vl = %zu\n",vl) ;
+    }
     
     // ====================== 学生编写代码区域结束 ======================
 }
@@ -26,7 +42,7 @@ void scalar_mul_scalar_uint64(uint64_t *c, const uint64_t *a, uint64_t scalar, s
 }
 
 int main() {
-    const size_t N = 18;
+    const size_t N = 101;
     uint64_t a[N], c_rvv[N], c_scalar[N];
     const uint64_t scalar = 7; // 测试标量
 
