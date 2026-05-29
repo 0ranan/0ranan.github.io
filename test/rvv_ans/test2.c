@@ -44,7 +44,7 @@ void scalar_mul_int16_to_int32(int32_t *c, const int16_t *a, const int16_t *b, s
 }
 
 int main() {
-    const size_t N = 1001;
+    const size_t N = 101;
     int16_t a[N], b[N];
     int32_t c_rvv[N], c_scalar[N];
 

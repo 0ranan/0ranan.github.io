@@ -25,7 +25,7 @@ void scalar_add_float32(float *c, const float *a, const float *b, size_t n) {
 }
 
 int main() {
-    const size_t N = 12;
+    const size_t N = 101;
     float a[N], b[N], c_rvv[N], c_scalar[N];
 
     // 初始化测试数据

@@ -26,7 +26,7 @@ void scalar_mul_scalar_uint64(uint64_t *c, const uint64_t *a, uint64_t scalar, s
 }
 
 int main() {
-    const size_t N = 18;
+    const size_t N = 101;
     uint64_t a[N], c_rvv[N], c_scalar[N];
     const uint64_t scalar = 7; // 测试标量
 

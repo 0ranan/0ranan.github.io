@@ -30,7 +30,7 @@ uint64_t scalar_sum_uint64(const uint64_t *a, size_t n) {
 }
 
 int main() {
-    const size_t N = 100;
+    const size_t N = 1000;
     uint64_t a[N];
 
     // 初始化测试数据（1到100）

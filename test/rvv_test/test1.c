@@ -25,7 +25,7 @@ void scalar_sub_int32(int32_t *c, const int32_t *a, const int32_t *b, size_t n) 
 }
 
 int main() {
-    const size_t N = 15; // 故意用非2的幂，测试剩余数据处理
+    const size_t N = 101; // 故意用非2的幂，测试剩余数据处理
     int32_t a[N], b[N], c_rvv[N], c_scalar[N];
 
     // 初始化测试数据
