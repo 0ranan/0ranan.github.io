@@ -75,8 +75,16 @@ async function main() {
     const content = makeFileMessage(title, tags, comments);
     // 文件主体写入内容
     try {
+        // 确保目录存在
+        fs.mkdirSync(fileDir, { recursive: true });
         fs.writeFileSync(filePath, content);
-        console.log("File written successfully");
+        // 设置文件权限为 0666
+        try {
+            fs.chmodSync(filePath, 0o666);
+            console.log("File written and permissions set to 666");
+        } catch (err) {
+            console.warn("File written but failed to set permissions:", err);
+        }
     } catch (err) {
         console.error("File write failed", err);
     }
