@@ -104,6 +104,18 @@ EOF'
 
 This approach is preferred when fixing multiple fields, as it avoids nested sed escaping issues.
 
+### 4.5. Fix file permissions
+
+After creating the file, fix its ownership so the host user can edit it directly:
+
+```bash
+docker compose exec dev chown 1000:1000 /app/source/_posts/<FILENAME>.md
+```
+
+This changes the file owner to the host user `anran` (uid=1000, gid=1000). Without this step, the file will be owned by `nobody:nogroup` (uid=65534) on the host, and VS Code (or any host-side editor) will report a permission denied error when trying to save changes.
+
+**Important**: The `chown` command must run **after** any content modifications (sed or heredoc) are completed, since `chown` only changes ownership, not file content.
+
 ### 5. What the final file looks like
 
 ```markdown
@@ -134,7 +146,7 @@ Key details:
 ## Gotchas (learned from real usage)
 
 1. **`printf | npm run newblog` does not work**: The TypeScript script uses readline which requires a real TTY. Piping input through `docker compose exec -T` silently fails — the command exits with code 0 but no file is created.
-2. **Permission issue**: Files created by `docker compose exec` may be owned by Docker's user (root/nobody). The host user may not be able to modify them directly. Always edit files through `docker compose exec dev`.
+2. **Permission issue**: Files created by `docker compose exec` inside the container (as root, uid=0) appear on the host as owned by `nobody:nogroup` (uid=65534). This prevents the host user from editing them directly in VS Code or other editors. **Always run `chown 1000:1000` on new files** (see step 4.5) to fix this.
 3. **Container paths**: Files inside Docker are at `/app/source/_posts/`, not the host path.
 4. **Timezone**: The Docker container may use a different timezone than the host. The date in generated files reflects Docker's clock.
 5. **Scaffold template bugs**: `scaffolds/post.md` uses `{{ title }}` in the body but hexo doesn't render it — it stays as literal text. This must be manually replaced.
