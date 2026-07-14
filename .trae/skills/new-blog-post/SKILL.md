@@ -1,89 +1,89 @@
 ---
 name: new-blog-post
-description: Creates a new Hexo blog post using the project's newblog script inside Docker. Invoke when the user asks to create, add, or write a new article/blog post.
+description: 使用项目的 newblog 脚本在 Docker 中创建新的 Hexo 博客文章。当用户要求创建、添加或撰写新文章/博客时调用。
 ---
 
-# New Blog Post
+# 新建博客文章
 
-Create a new blog post for this Hexo project. Always use the Docker Compose development environment as documented in `README.MD`.
+为此 Hexo 项目创建新的博客文章。始终使用 `README.MD` 中记录的 Docker Compose 开发环境。
 
-## Workflow
+## 工作流程
 
-### 1. Ensure Docker environment is running
+### 1. 确保 Docker 环境正在运行
 
-Check if the Docker dev container is up. If not, start it:
+检查 Docker 开发容器是否已启动。如果未启动，执行以下命令：
 
 ```bash
 docker compose up -d && docker compose ps
 ```
 
-### 2. Gather post metadata from the user
+### 2. 从用户处获取文章元数据
 
-Ask the user for the following information:
+向用户询问以下信息：
 
-| Field | Description | Example |
+| 字段 | 描述 | 示例 |
 |-------|-------------|---------|
 | title | 文章标题，必填 | 常用skill收录 |
 | tags | 标签，多个用 `-` 分隔 | AI-skill |
 | categories | 分类，多个用 `-` 分隔 | 编程 |
 
-**Rules:**
-- Title is required and cannot be empty.
-- Tags and categories use `-` as the separator between multiple values.
+**规则：**
+- 标题是必填的，不能为空。
+- 标签和分类使用 `-` 作为多个值之间的分隔符。
 
-### 3. Create the post with `hexo new`
+### 3. 使用 `hexo new` 创建文章
 
-**Use `hexo new` as the primary method.** The `npm run newblog` script uses readline and does not work with piped input through `docker compose exec`.
+**优先使用 `hexo new` 作为主要方式。** `npm run newblog` 脚本使用了 readline，无法通过 `docker compose exec` 管道输入。
 
 ```bash
 docker compose exec dev hexo new "<标题>"
 ```
 
-Example:
+示例：
 ```bash
 docker compose exec dev hexo new "常用skill收录"
 ```
 
-This creates a file at `source/_posts/YYYYMMDD-<标题>.md` (inside Docker: `/app/source/_posts/YYYYMMDD-<标题>.md`).
+这会在 `source/_posts/YYYYMMDD-<标题>.md` 处创建文件（在 Docker 内部为：`/app/source/_posts/YYYYMMDD-<标题>.md`）。
 
-### 4. Fix the scaffold output
+### 4. 修复脚手架输出
 
-The `scaffolds/post.md` template has two issues that must be corrected after creation:
+`scaffolds/post.md` 模板有两个问题需要在创建后修正：
 
-| Issue | Scaffold output | Correct format |
+| 问题 | 脚手架输出 | 正确格式 |
 |-------|----------------|----------------|
-| Title placeholder | `# {{ title }}` | `# <实际标题>` |
-| Date separator | `2026-06-12 18:43:10` | `2026/06/12 18:43:10` |
-| Empty tags/categories | `tags:\ncategories:` | Populated YAML lists |
+| 标题占位符 | `# {{ title }}` | `# <实际标题>` |
+| 日期分隔符 | `2026-06-12 18:43:10` | `2026/06/12 18:43:10` |
+| 空标签/分类 | `tags:\ncategories:` | 填充好的 YAML 列表 |
 
-Run the following fix commands inside the Docker container (replace `<FILENAME>` with the actual generated filename):
+在 Docker 容器内运行以下修复命令（将 `<文件名>` 替换为实际生成的文件名）：
 
 ```bash
-# 1. Fix date format (dash to slash)
-docker compose exec dev sed -i 's/^date: \([0-9]\{4\}\)-\([0-9]\{2\}\)-\([0-9]\{2\}\)/date: \1\/\2\/\3/' /app/source/_posts/<FILENAME>.md
+# 1. 修复日期格式（短横线改为斜线）
+docker compose exec dev sed -i 's/^date: \([0-9]\{4\}\)-\([0-9]\{2\}\)-\([0-9]\{2\}\)/date: \1\/\2\/\3/' /app/source/_posts/<文件名>.md
 
-# 2. Fix updated format
-docker compose exec dev sed -i 's/^updated: \([0-9]\{4\}\)-\([0-9]\{2\}\)-\([0-9]\{2\}\)/updated: \1\/\2\/\3/' /app/source/_posts/<FILENAME>.md
+# 2. 修复 updated 格式
+docker compose exec dev sed -i 's/^updated: \([0-9]\{4\}\)-\([0-9]\{2\}\)-\([0-9]\{2\}\)/updated: \1\/\2\/\3/' /app/source/_posts/<文件名>.md
 
-# 3. Replace {{ title }} placeholder with actual title
-docker compose exec dev sed -i 's/^# {{ title }}$/# <实际标题>/' /app/source/_posts/<FILENAME>.md
+# 3. 将 {{ title }} 占位符替换为实际标题
+docker compose exec dev sed -i 's/^# {{ title }}$/# <实际标题>/' /app/source/_posts/<文件名>.md
 
-# 4. Populate tags (replace empty tags: line with YAML list)
-docker compose exec dev sed -i 's/^tags:$/tags:\n  - tag1\n  - tag2/' /app/source/_posts/<FILENAME>.md
+# 4. 填充标签（将空 tags: 行替换为 YAML 列表）
+docker compose exec dev sed -i 's/^tags:$/tags:\n  - tag1\n  - tag2/' /app/source/_posts/<文件名>.md
 
-# 5. Populate categories
-docker compose exec dev sed -i 's/^categories:$/categories:\n  - cat1\n  - cat2/' /app/source/_posts/<FILENAME>.md
+# 5. 填充分类
+docker compose exec dev sed -i 's/^categories:$/categories:\n  - cat1\n  - cat2/' /app/source/_posts/<文件名>.md
 ```
 
-After fixing, verify the file content:
+修复后，验证文件内容：
 ```bash
-docker compose exec dev cat /app/source/_posts/<FILENAME>.md
+docker compose exec dev cat /app/source/_posts/<文件名>.md
 ```
 
-Alternatively, rewrite the entire file in one go using a heredoc inside Docker:
+或者，在 Docker 内使用 heredoc 一次性重写整个文件：
 
 ```bash
-docker compose exec dev bash -c 'cat > /app/source/_posts/<FILENAME>.md << "EOF"
+docker compose exec dev bash -c 'cat > /app/source/_posts/<文件名>.md << "EOF"
 ---
 title: <标题>
 date: <YYYY/MM/DD HH:mm:ss>
@@ -102,21 +102,21 @@ typora-root-url: ..
 EOF'
 ```
 
-This approach is preferred when fixing multiple fields, as it avoids nested sed escaping issues.
+当需要修复多个字段时，推荐使用此方式，因为它避免了嵌套 sed 转义的问题。
 
-### 4.5. Fix file permissions
+### 4.5. 修复文件权限
 
-After creating the file, fix its ownership so the host user can edit it directly:
+创建文件后，修复其所有权以便宿主机用户可以直接编辑：
 
 ```bash
-docker compose exec dev chown 1000:1000 /app/source/_posts/<FILENAME>.md
+docker compose exec dev chown 1000:1000 /app/source/_posts/<文件名>.md
 ```
 
-This changes the file owner to the host user `anran` (uid=1000, gid=1000). Without this step, the file will be owned by `nobody:nogroup` (uid=65534) on the host, and VS Code (or any host-side editor) will report a permission denied error when trying to save changes.
+这会将文件所有者更改为宿主机用户 `anran`（uid=1000，gid=1000）。如果不执行此步骤，文件在宿主机上将被 `nobody:nogroup`（uid=65534）拥有，VS Code（或任何宿主机端的编辑器）在尝试保存更改时会报告权限被拒绝的错误。
 
-**Important**: The `chown` command must run **after** any content modifications (sed or heredoc) are completed, since `chown` only changes ownership, not file content.
+**重要提示**：`chown` 命令必须在所有内容修改（sed 或 heredoc）完成之后运行，因为 `chown` 只能更改所有权，不能更改文件内容。
 
-### 5. What the final file looks like
+### 5. 最终文件的样式
 
 ```markdown
 ---
@@ -135,25 +135,25 @@ typora-root-url: ..
 # 常用skill收录
 ```
 
-Key details:
-- File is placed in `source/_posts/` directory.
-- Filename format: `YYYYMMDD-<title>.md` (e.g., `20260613-常用skill收录.md`).
-- `date` and `updated` use `YYYY/MM/DD HH:mm:ss` format (slashes, not dashes).
-- `comments` is always `true`.
-- `typora-root-url` is always `..`.
-- The `# {{ title }}` placeholder from scaffold must be replaced with the actual title.
+关键细节：
+- 文件放置在 `source/_posts/` 目录中。
+- 文件名格式：`YYYYMMDD-<标题>.md`（例如：`20260613-常用skill收录.md`）。
+- `date` 和 `updated` 使用 `YYYY/MM/DD HH:mm:ss` 格式（斜线，而非短横线）。
+- `comments` 始终为 `true`。
+- `typora-root-url` 始终为 `..`。
+- 脚手架中的 `# {{ title }}` 占位符必须替换为实际标题。
 
-## Gotchas (learned from real usage)
+## 注意事项（实际使用中总结的经验）
 
-1. **`printf | npm run newblog` does not work**: The TypeScript script uses readline which requires a real TTY. Piping input through `docker compose exec -T` silently fails — the command exits with code 0 but no file is created.
-2. **Permission issue**: Files created by `docker compose exec` inside the container (as root, uid=0) appear on the host as owned by `nobody:nogroup` (uid=65534). This prevents the host user from editing them directly in VS Code or other editors. **Always run `chown 1000:1000` on new files** (see step 4.5) to fix this.
-3. **Container paths**: Files inside Docker are at `/app/source/_posts/`, not the host path.
-4. **Timezone**: The Docker container may use a different timezone than the host. The date in generated files reflects Docker's clock.
-5. **Scaffold template bugs**: `scaffolds/post.md` uses `{{ title }}` in the body but hexo doesn't render it — it stays as literal text. This must be manually replaced.
+1. **`printf | npm run newblog` 不可用**：TypeScript 脚本使用了 readline，需要真实的 TTY。通过 `docker compose exec -T` 管道输入会静默失败——命令以退出码 0 结束，但不会创建文件。
+2. **权限问题**：通过 `docker compose exec` 在容器内创建的文件（以 root 身份，uid=0）在宿主机上显示为由 `nobody:nogroup`（uid=65534）拥有。这会阻止宿主机用户在 VS Code 或其他编辑器中直接编辑它们。**创建新文件后务必运行 `chown 1000:1000`**（参见步骤 4.5）来解决此问题。
+3. **容器路径**：文件在 Docker 内位于 `/app/source/_posts/`，而非宿主机路径。
+4. **时区**：Docker 容器可能使用与宿主机不同的时区。生成文件中的日期反映了 Docker 的时钟。
+5. **脚手架模板 Bug**：`scaffolds/post.md` 在正文中使用了 `{{ title }}`，但 hexo 不会渲染它——它会保持为字面文本。必须手动替换。
 
-## Project Notes
+## 项目备注
 
-- Theme: `hexo-theme-aircloud-master`. Blog title: "安苒-博客", author: "刘张豪".
-- All commands run inside Docker via `docker compose exec dev`.
-- Post asset folders are enabled (`post_asset_folder: true` in `_config.yml`).
-- Git commit message format must follow `.trae/rules/git-commit-message.md`.
+- 主题：`hexo-theme-aircloud-master`。博客标题："安苒-博客"，作者："刘张豪"。
+- 所有命令通过 `docker compose exec dev` 在 Docker 内运行。
+- 文章资源文件夹已启用（`_config.yml` 中 `post_asset_folder: true`）。
+- Git 提交信息格式必须遵循 `.trae/rules/git-commit-message.md`。
