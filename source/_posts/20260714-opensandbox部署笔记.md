@@ -288,53 +288,10 @@ kubectl delete namespace opensandbox
 kind delete cluster --name opensandbox
 ```
 
-## 使用python 服务端
-
-1. 创建python 环境并且安装依赖
+### 开放python服务到外部
 
 ```bash
-# 创建环境
-python3 -m venv .venv
-# 安装依赖
-.venv/bin/pip install opensandbox-server
-# 启动环境
-source ./.venv/bin/activate
-```
-
-2. 创建配置文件
-```bash
-
-opensandbox-server init-config ~/.sandbox.toml --example k8s
-
-```
-
-
-3. 修改配置文件
-在.sandbox.toml 添加 api_key
-```
-[server]
-host = "0.0.0.0"
-port = 8080
-api_key = "test-key-123"
-```
-
-api_key 用于 API 认证 ，防止未授权的请求访问你的 OpenSandbox 服务器。
-
-**工作机制**
-  - 服务器收到请求时，检查 HTTP 头中的 OPEN-SANDBOX-API-KEY 是否匹配配置的 api_key
-  - 匹配才放行，否则返回 401
-  - /health 、 /docs 、 /redoc 这几个端点不需要认证，始终开放
-
-**谁需要传**
-  - SDK、CLI、MCP 等所有客户端访问服务器时都需要带上这个 key：
-
-
-4. opensandbox-server
-```bash
-# 启动前清除代理
-unset ALL_PROXY all_proxy HTTPS_PROXY https_proxy HTTP_PROXY http_proxy
-# 启动opensandbox-server
-opensandbox-server --config /home/anran/code/OpenSandBox-TestSDK/.sandbox.toml
+kubectl port-forward svc/opensandbox-server 8080:80 -n opensandbox-system
 ```
 
 ## 使用python客户端进行调试
@@ -342,6 +299,8 @@ opensandbox-server --config /home/anran/code/OpenSandBox-TestSDK/.sandbox.toml
 1. 安装客户端sdk
 
 ```bash
+python3 -m venv .venv
+source ./.venv/bin/activate
 pip install opensandbox
 ```
 
@@ -355,21 +314,13 @@ kubectl create namespace opensandbox
 ```bash
 # 本地拉取镜像
 docker pull python:3.11
-# 查询集群名称
-kind get clusters
-#保存docker镜像到本地
-docker save python:3.11 -o /tmp/python-3.11.tar
+docker save python:3.11 --platform linux/amd64 -o /tmp/python-3.11-amd64.tar
+kind load image-archive /tmp/python-3.11-amd64.tar --name desktop
+rm /tmp/python-3.11-amd64.tar
 
-# 取消Kind的代理变量
-docker exec -it kind-control-plane sh -c "unset http_proxy https_proxy HTTP_PROXY HTTPS_PROXY && crictl pull python:3.11"
-# 将镜像导入集群
-docker cp /tmp/python-3.11.tar kind-control-plane:/tmp/
-docker exec -it kind-control-plane crictl load /tmp/python-3.11.tar
-# 导入到 k8s.io 命名空间
-docker exec -it kind-control-plane ctr -n k8s.io images import /tmp/python-3.11.tar
 
 # 验证镜像
-docker exec kind-control-plane crictl images | grep python
+docker exec desktop-control-plane crictl images | grep python
 
 ```
 
@@ -389,12 +340,14 @@ from opensandbox.config.connection import ConnectionConfig
 async def main():
     # 构建与 OpenSandbox 服务端的连接配置
     config = ConnectionConfig(
-        # 服务端域名/地址，本机 8080 端口
+        # 服务端域名/地址，本机 8080 端口（对应 kubectl port-forward 的本地端口）
         domain="localhost:8080",
         # 通信协议 http 或 https
         protocol="http",
         # API 认证密钥，与服务端 [server] api_key 对应；未配置时可省略
-        api_key="test-key-123",  # 如果配置了 api_key 则需要
+        api_key="my_api_key",  # 如果配置了 api_key 则需要
+        # K8s 环境中沙箱容器网络不可直接访问，需通过 server 代理转发
+        use_server_proxy=True,
     )
 
     # 异步创建沙箱实例：向服务端请求分配一个沙箱容器，等待就绪
