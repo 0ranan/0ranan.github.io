@@ -14,63 +14,278 @@ typora-root-url: ..
 
 # opensandbox部署笔记
 
-## 在Kubernetes部署
+## 在kind部署
 
-0. 本地模拟创建集群
 ```
-kind create cluster
+kubectl create namespace opensandbox
 ```
 
-1. 安装Helm
+### 安装环境
 
 ```bash
+# 安装Helm
 curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# 安装kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+# 安装kind
+[ $(uname -m) = x86_64 ] && curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.32.0/kind-linux-amd64
+chmod +x ./kind
+sudo mv ./kind /usr/local/bin/kind
 ```
 
-2. 构建项目本地镜像
+### 构建项目本地镜像
+
 ```bash
 # 1. 克隆项目（如果已经克隆过可以跳过）
 git clone https://github.com/alibaba/OpenSandbox.git
+# 2. 配置环境变量
+cd OpenSandbox
+REPO_ROOT=$(pwd)
 
-# 2. 进入项目目录
-cd OpenSandbox/kubernetes
 
-# 3. 构建控制器镜像，并给它打一个本地标签
-make docker-build CONTROLLER_IMG=opensandbox-controller:local
+# controller（operator）
+make docker-build CONTROLLER_IMG=opensandbox/controller:dev
+# task-executor（沙箱内 HTTP 执行代理）
+make docker-build-task-executor TASK_EXECUTOR_IMG=opensandbox/task-executor:dev
+# image-committer（pause/resume 快照，可选）
+make docker-build-image-committer IMAGE_COMMITTER_IMG=opensandbox/image-committer:dev
 
-# 4. 构建任务执行器镜像
-make docker-build-task-executor TASK_EXECUTOR_IMG=opensandbox-task-executor:local
+# ---------- server ----------
+docker build -t opensandbox/server:dev -f "$REPO_ROOT/server/Dockerfile" "$REPO_ROOT/server/"
+
+# ---------- 运行时组件 ----------
+# 以下必须在仓库根目录执行
+cd "$REPO_ROOT"
+# execd（沙箱内守护进程，3阶段构建：go + bwrap + alpine）
+docker build -t opensandbox/execd:dev -f components/execd/Dockerfile .
+# egress（网络出口策略 sidecar，含 iptables/nftables/mitmproxy）
+docker build -t opensandbox/egress:dev -f components/egress/Dockerfile .
+# ingress（网关路由，纯 Go 二进制 + alpine）
+docker build -t opensandbox/ingress:dev -f components/ingress/Dockerfile .
 ```
 
-3. 将本地镜像加载到 Kind 集群
+### 将本地镜像加载到 Kind 集群
 
 ```bash
-kind load docker-image opensandbox-controller:local
-# 如果构建了任务执行器，也需要加载
-kind load docker-image opensandbox-task-executor:local
+for img in \
+  opensandbox/controller:dev \
+  opensandbox/task-executor:dev \
+  opensandbox/image-committer:dev \
+  opensandbox/server:dev \
+  opensandbox/execd:dev \
+  opensandbox/egress:dev \
+  opensandbox/ingress:dev; do
+  kind load docker-image "$img" --name desktop
+done
 ```
 
+#### 验证
+```bash
+docker exec desktop-control-plane crictl images | grep opensandbox
+```
 
-4. 利用Helm部署，使用本地镜像
+### 利用Helm部署，使用本地镜像
 
-Helm Chart 包，只做应用的部署模板
+#### 构建 Helm 依赖
 
 ```bash
+cd "$REPO_ROOT/kubernetes/charts"
+helm dependency build opensandbox
+```
 
-# 使用本地镜像重新安装
-helm install opensandbox \
-  https://github.com/opensandbox-group/OpenSandbox/releases/download/helm/opensandbox-controller/0.2.0/opensandbox-controller-0.2.0.tgz \
+#### 创建本地 values 文件
+
+```bash
+cat > "$REPO_ROOT/kubernetes/charts/my-local-values.yaml" << 'EOF'
+opensandbox-controller:
+  controller:
+    image:
+      repository: opensandbox/controller
+      tag: dev
+      pullPolicy: IfNotPresent
+    taskExecutorImage: opensandbox/task-executor:dev
+    replicaCount: 1
+    logLevel: debug
+    snapshot:
+      imageCommitterImage: opensandbox/image-committer:dev
+      commitJobTimeout: 10m
+      registry: ""
+      registryInsecure: false
+      snapshotPushSecret: ""
+      resumePullSecret: ""
+
+opensandbox-server:
+  server:
+    image:
+      repository: opensandbox/server
+      tag: dev
+      pullPolicy: IfNotPresent
+    replicaCount: 1
+    gateway:
+      enabled: false
+    resources:
+      limits:
+        cpu: "1"
+        memory: 4Gi
+      requests:
+        cpu: "500m"
+        memory: 2Gi
+
+  configToml: |
+    [server]
+    host = "0.0.0.0"
+    port = 80
+    api_key = "my_api_key"
+
+    [log]
+    level = "DEBUG"
+
+    [runtime]
+    type = "kubernetes"
+    execd_image = "opensandbox/execd:dev"
+
+    [kubernetes]
+    kubeconfig_path = ""
+    namespace = "opensandbox"
+    informer_enabled = true
+    informer_resync_seconds = 300
+    workload_provider = "batchsandbox"
+    batchsandbox_template_file = "/etc/opensandbox/example.batchsandbox-template.yaml"
+
+    [egress]
+    image = "opensandbox/egress:dev"
+    mode = "dns+nft"
+EOF
+```
+
+#### 部署
+
+```bash
+helm install opensandbox ./opensandbox \
+  -f my-local-values.yaml \
   --namespace opensandbox-system \
-  --create-namespace \
-  --set controller.image.repository=opensandbox-controller \
-  --set controller.image.tag=local \
-  --set controller.image.pullPolicy=IfNotPresent
+  --create-namespace
 ```
 
-5. 验证部署
+#### 验证
 
 ```bash
+# 检查 Pod 状态
 kubectl get pods -n opensandbox-system
+# 检查 CRD
+kubectl get crd | grep opensandbox
+# 查看 controller 日志
+kubectl logs -n opensandbox-system -l control-plane=controller-manager -f
+# 查看 server 日志
+kubectl logs -n opensandbox-system -l app.kubernetes.io/name=opensandbox-server -f
+```
+
+### 创建测试资源
+
+#### Pool 资源说明
+
+Pool 是 OpenSandbox 的自定义资源（CRD），用于管理一组可复用的 Pod 池，供上层 BatchSandbox 按需分配。
+
+**模板（template）**：定义了 Pool 中每个 Pod 的规格。Controller 会以此为模板创建 Pod，每个 Pod 是一个独立的沙箱实例。示例中指定的是跑 busybox 镜像，执行 `sleep infinity` 让容器持续运行。
+
+**容量规格（capacitySpec）**：四个字段约束了 Pool 的自动扩缩行为：
+
+| 字段 | 含义 |
+| --- | --- |
+| poolMin | Pool 中 Pod 总数的下限，Controller 确保至少有这么多 Pod 存在 |
+| poolMax | Pool 中 Pod 总数的上限，Controller 不会创建超过此数量的 Pod |
+| bufferMin | 空闲（未分配给 BatchSandbox 的）Pod 数量下限，低于此值 Controller 会自动补充 |
+| bufferMax | 空闲 Pod 数量上限，超过此值 Controller 会回收多余的空闲 Pod |
+
+四者的约束关系：`bufferMin ≤ bufferMax ≤ poolMax`，且 `poolMin ≤ poolMax`。
+
+**工作流程**：
+
+1. Controller 观测到 Pool 资源后，按 poolMin 创建初始 Pod
+2. 当 BatchSandbox 引用该 Pool 并请求沙箱时，Controller 从空闲 Pod 中分配
+3. 分配后空闲 Pod 数量下降，若低于 bufferMin，Controller 自动创建新 Pod 补充
+4. Pod 被释放回 Pool 后，若空闲数超过 bufferMax，Controller 自动删除多余 Pod
+5. 总 Pod 数始终受 poolMin 和 poolMax 约束
+
+Pool 的核心价值在于**预热**：Pod 的创建和启动需要时间，通过维持一定数量的空闲 Pod，BatchSandbox 请求沙箱时可以直接分配已就绪的 Pod，避免冷启动延迟。
+
+#### 创建 Pool 和 BatchSandbox
+
+```bash
+# 创建命名空间
+kubectl create namespace opensandbox
+
+# 创建 Pool（预热资源池）
+kubectl apply -f - << 'EOF'
+apiVersion: sandbox.opensandbox.io/v1alpha1
+kind: Pool
+metadata:
+  name: test-pool
+  namespace: opensandbox
+spec:
+  template:
+    spec:
+      containers:
+      - name: sandbox
+        image: busybox:latest
+        command: ["sleep", "infinity"]
+  capacitySpec:
+    bufferMax: 5
+    bufferMin: 1
+    poolMax: 10
+    poolMin: 2
+EOF
+
+# 创建 BatchSandbox
+kubectl apply -f - << 'EOF'
+apiVersion: sandbox.opensandbox.io/v1alpha1
+kind: BatchSandbox
+metadata:
+  name: test-batch
+  namespace: opensandbox
+spec:
+  replicas: 2
+  poolRef: test-pool
+EOF
+
+# 查看状态
+kubectl get pools -n opensandbox
+kubectl get batchsandboxes -n opensandbox
+kubectl get pods -n opensandbox
+```
+
+#### 调试完成清理内容
+
+```bash
+# 1. 先删 BatchSandbox（它引用了 Pool）
+kubectl delete batchsandbox test-batch -n opensandbox
+
+# 2. 再删 Pool（它管理着 Pod）
+kubectl delete pool test-pool -n opensandbox
+
+# 3. Pod 会自动消失，不用手动删
+```
+
+### 卸载测试资源
+
+```bash
+# 卸载 Helm release
+helm uninstall opensandbox -n opensandbox-system
+
+# 删除 CRD（注意：会级联删除所有相关资源）
+kubectl delete crd batchsandboxes.sandbox.opensandbox.io
+kubectl delete crd pools.sandbox.opensandbox.io
+kubectl delete crd sandboxsnapshots.sandbox.opensandbox.io
+
+# 删除命名空间
+kubectl delete namespace opensandbox-system
+kubectl delete namespace opensandbox
+
+# 删除 Kind 集群
+kind delete cluster --name opensandbox
 ```
 
 ## 使用python 服务端
