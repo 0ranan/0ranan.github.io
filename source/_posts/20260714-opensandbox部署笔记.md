@@ -45,7 +45,7 @@ git clone https://github.com/alibaba/OpenSandbox.git
 cd OpenSandbox
 REPO_ROOT=$(pwd)
 
-
+cd kubernetes/
 # controller（operator）
 make docker-build CONTROLLER_IMG=opensandbox/controller:dev
 # task-executor（沙箱内 HTTP 执行代理）
