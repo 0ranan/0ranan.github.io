@@ -367,3 +367,14 @@ if(donateButton) {
     donateImg.src = donateImg.dataset.src
 }
 
+// 内联音频播放：拦截"试听"链接，阻止页面跳转
+document.addEventListener('DOMContentLoaded', () => {
+    document.body.addEventListener('click', (e) => {
+        const link = e.target.closest('a[href*="dict.youdao.com/dictvoice"]');
+        if (!link) return;
+        e.preventDefault();
+        const audio = new Audio(link.href);
+        audio.play().catch(() => {});
+    });
+});
+
