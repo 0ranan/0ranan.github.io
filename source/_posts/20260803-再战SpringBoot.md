@@ -130,11 +130,11 @@ builder() 返回构建器对象，每个 .xxx() 填一个参数，最后 .build(
 
 ## Java Record Classes 精要
 
+> 人肉理解: record 就是所有属性都是final 的一种class ,被编译器生成过class类常用的方法,比如hashCode,equals,toString 更方便纯数据的对象进行访问.
+
 **record** 读音：
 - 英音：/rɪˈkɔːd/（动词） /ˈrekɔːd/（名词） [试听](https://dict.youdao.com/dictvoice?audio=record&type=1)
 - 美音：/rɪˈkɔrd/（动词） /ˈrɛkɚd/（名词/形容词） [试听](https://dict.youdao.com/dictvoice?audio=record&type=2)
-
-> 人肉理解: record 就是所有属性都是final 的一种class ,被编译器生成过class类常用的方法,比如hashCode,equals,toString 更方便纯数据的对象进行访问.
 
 ### 定义
 
