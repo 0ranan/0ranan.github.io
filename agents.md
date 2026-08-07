@@ -10,7 +10,7 @@
 
 撰写或编辑博客文章时，AI 可以且只可以做以下操作：
 
-- Front-matter（YAML 头部）规范化，格式遵循 `.trae/skills/new-blog-post/SKILL.md` 中的约定
+- Front-matter（YAML 头部）规范化，格式遵循 `.agents/skills/new-blog-post/SKILL.md` 中的约定
 - Markdown 语法整理：标题层级、列表、代码块语言标注、引用、表格等
 - 中文排版规范化（中英文之间空格、全角/半角标点等）
 - 图片路径、链接路径的修正
@@ -43,11 +43,11 @@
 ## 语言规范
 
 - 所有新增的 skill、文档、脚本中的注释与说明，一律使用中文
-- 包括但不限于：`.trae/skills/**/SKILL.md`、`.trae/rules/`、`*.md` 文档、代码中的注释
+- 包括但不限于：`.agents/skills/**/SKILL.md`、`.agents/rules/`、`*.md` 文档、代码中的注释
 - 已有文件的修改遵循原文语言风格，新增内容使用中文
 
 ## 相关资源
 
-- 新建文章流程：`.trae/skills/new-blog-post/SKILL.md`
-- Hexo 生命周期管理（预览/生成/部署/测试）：`.trae/skills/hexo-management/SKILL.md`
-- Git 提交信息规范：`.trae/rules/git-commit-message.md`
+- 新建文章流程：`.agents/skills/new-blog-post/SKILL.md`
+- Hexo 生命周期管理（预览/生成/部署/测试）：`.agents/skills/hexo-management/SKILL.md`
+- Git 提交信息规范：`.agents/rules/git-commit-message.md`

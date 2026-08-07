@@ -156,4 +156,4 @@ typora-root-url: ..
 - 主题：`hexo-theme-aircloud-master`。博客标题："安苒-博客"，作者："刘张豪"。
 - 所有命令通过 `docker compose exec dev` 在 Docker 内运行。
 - 文章资源文件夹已启用（`_config.yml` 中 `post_asset_folder: true`）。
-- Git 提交信息格式必须遵循 `.trae/rules/git-commit-message.md`。
+- Git 提交信息格式必须遵循 `.agents/rules/git-commit-message.md`。
