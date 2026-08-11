@@ -1,7 +1,7 @@
 ---
 title: 再战SpringBoot
 date: 2026/08/03 07:46:13
-updated: 2026/08/04 15:32:00
+updated: 2026/08/11 15:32:00
 comments: true
 tags:
   - SpringBoot
@@ -13,6 +13,72 @@ typora-root-url: ..
 ---
 
 # 再战SpringBoot
+
+## 后端常用注解
+
+### 一、Spring / Spring Boot 核心
+
+| 注解 | 用途 | 关键要点 |
+| --- | --- | --- |
+| @Autowired | 依赖注入（最高频） | 按类型注入；同类型多实现需配合 @Qualifier |
+| @Value | 注入配置项 | 从 properties/yml 取值，如 @Value("${app.name}") |
+| @Bean / @Configuration | 配置类与 Bean 定义 | @Configuration 标注配置类，@Bean 声明方法返回值为 Bean |
+| @Transactional | 事务管理 | 默认只回滚 RuntimeException；可配 rollbackFor、propagation、isolation |
+| @Async / @EnableAsync | 异步执行 | 需在配置类加 @EnableAsync 开启，方法返回 void 或 Future |
+| @Scheduled / @EnableScheduling | 定时任务 | 需 @EnableScheduling 开启；cron / fixedRate / fixedDelay |
+| @Qualifier | 多实现时指定注入哪个 Bean | 与 @Autowired 搭配，按 Bean 名称精确选择 |
+| @EventListener | 监听 Spring 事件 | 配合发布事件 applicationEventPublisher.publishEvent() |
+| @PreDestroy | Bean 销毁前清理 | 类似 init 的 @PostConstruct（进入容器时执行） |
+| @ConditionalOnProperty / @ConditionalOnClass | 条件装配 | 满足条件才创建 Bean（Spring Boot 自动配置核心之一） |
+| @ConfigurationProperties / @EnableConfigurationProperties | 绑定配置前缀 | 把 app.xxx 前缀配置映射到 POJO；需 @EnableConfigurationProperties 或 @Component |
+| @SpringBootApplication | 启动类 | 组合了 @Configuration + @EnableAutoConfiguration + @ComponentScan |
+| @RestControllerAdvice / @ExceptionHandler | 全局异常处理 | 类上 @RestControllerAdvice 统一兜底，方法上 @ExceptionHandler 指定异常类型 |
+| @EnableWebSecurity / @EnableMethodSecurity | 开启 Security / 方法级权限 | Spring Security 6.x 推荐 @EnableMethodSecurity（替代旧的 @EnableGlobalMethodSecurity） |
+
+### 二、Spring MVC（HTTP）
+
+| 注解 | 用途 | 关键要点 |
+| --- | --- | --- |
+| @PostMapping / @PutMapping / @DeleteMapping / @PatchMapping | 其他 HTTP 方法映射 | 均为 @RequestMapping(method=…) 的缩写糖 |
+| @RequestBody | 绑定 JSON 请求体 | 反序列化前端传来的 JSON 到对象 |
+| @RequestParam | 绑定查询参数 | 例 ?page=1 → @RequestParam("page") int page；可设 required/defaultValue |
+| @PathVariable | 绑定路径变量 | 例 /user/{id} → @PathVariable Long id |
+
+### 三、Lombok
+
+| 注解 | 用途 | 关键要点 |
+| --- | --- | --- |
+| @Slf4j | 生成 log 对象 | 直接 log.info(...) 即可，不用手写 Logger |
+| @RequiredArgsConstructor | 为 final 字段生成构造器 | 常配合注入：final 字段 + 构造器注入（Spring 推荐方式） |
+| @Getter / @Builder / @NoArgsConstructor / @AllArgsConstructor | 小工具集合 | @Builder 链式构建对象；@NoArgsConstructor 无参构造等 |
+
+> 💡 @Data = @Getter + @Setter + @ToString + @EqualsAndHashCode + @RequiredArgsConstructor 全家桶。
+
+### 四、MyBatis / MyBatis-Plus
+
+| 注解 | 用途 | 关键要点 |
+| --- | --- | --- |
+| @Mapper / @MapperScan | Mapper 扫描注册 | @Mapper 加在接口上；@MapperScan 加在启动类/配置类上批量扫包 |
+| @TableName / @TableId / @TableField | 表/主键/字段映射 | MyBatis-Plus 用法：POJO 字段 ↔ 数据库表列对应 |
+
+### 五、Jackson（JSON 序列化）
+
+| 注解 | 用途 | 关键要点 |
+| --- | --- | --- |
+| @JsonProperty | 指定序列化/反序列化时的字段名 | 如 @JsonProperty("user_name") String userName |
+| @JsonAlias | 反序列化时接受多个别名 | 只影响读（反序列化），不影响写 |
+| @JsonIgnore | 序列化时忽略该字段 | 防止敏感字段（如密码）泄露到 JSON |
+
+### 六、WebSocket（JSR-356）
+
+| 注解 | 用途 | 关键要点 |
+| --- | --- | --- |
+| @ServerEndpoint | 标注 WebSocket 端点类 | 值写 URL 路径，如 @ServerEndpoint("/ws/chat")；需配 ServerEndpointExporter 才生效（Spring Boot 中） |
+| @OnOpen | 连接建立时回调 | 在端点类的方法上标注；参数可拿 Session、@PathParam |
+| @OnMessage | 收到客户端消息时回调 | 参数是消息内容（String / byte[] / 自定义对象）；返回非 void 会自动回发 |
+| @OnClose | 连接关闭时回调 | 常做资源清理、离线状态标记；参数可拿 Session 和 CloseReason |
+| @OnError | 连接出错时回调 | 处理异常，参数里通常带 Throwable |
+| @PathParam | 取 URL 路径参数 | 配合 @ServerEndpoint 路径中的 {xxx} 占位符，如 @ServerEndpoint("/ws/{roomId}") |
 
 ## 心路历程
 
