@@ -21,6 +21,7 @@
 - 不替用户"润色"、"升华"、"扩写"文章
 - 不添加背景知识、不补充示例、不重写用户的原话
 - 用户明确要求修改的内容除外
+- 用户要求撰写、改写正文，或降低 AI 味时，按 `.agents/skills/writing-blog-notes/SKILL.md` 写。只要求建文或格式整理时，不改措辞
 
 ### 3. 需要补充的信息 → 通过对话提示
 
@@ -49,5 +50,6 @@
 ## 相关资源
 
 - 新建文章流程：`.trae/skills/new-blog-post/SKILL.md`
+- 博客正文笔记体：`.agents/skills/writing-blog-notes/SKILL.md`
 - Hexo 生命周期管理（预览/生成/部署/测试）：`.trae/skills/hexo-management/SKILL.md`
 - Git 提交信息规范：`.trae/rules/git-commit-message.md`

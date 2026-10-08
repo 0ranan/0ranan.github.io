@@ -143,6 +143,10 @@ typora-root-url: ..
 - `typora-root-url` 始终为 `..`。
 - 脚手架中的 `# {{ title }}` 占位符必须替换为实际标题。
 
+## 正文
+
+用户提供正文并只要建文时，不改措辞。用户要求撰写、改写，或降低 AI 味时，遵循 `writing-blog-notes`。
+
 ## 注意事项（实际使用中总结的经验）
 
 1. **`printf | npm run newblog` 不可用**：TypeScript 脚本使用了 readline，需要真实的 TTY。通过 `docker compose exec -T` 管道输入会静默失败——命令以退出码 0 结束，但不会创建文件。
