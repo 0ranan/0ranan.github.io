@@ -133,7 +133,7 @@ docker compose exec -d dev npx hexo server -p 4000
 # 3. 确认无误后停止预览、提交推送
 docker compose exec dev pkill -f "hexo server"
 git add -A
-git commit -m "..."  # 遵循 .trae/rules/git-commit-message.md 规范
+git commit -m "..."  # 遵循 .agents/rules/git-commit-message.md 规范
 git push origin main
 ```
 
@@ -248,7 +248,7 @@ docker compose exec dev pkill -f "hexo server"
 2. **容器工作目录**：Docker 内项目路径为 `/app`，与宿主机通过 bind mount 同步，文件修改即时生效。
 3. **权限问题**：若容器内创建了新文件，在宿主机上可能显示为 `nobody:nogroup`，需要时执行 `docker compose exec dev chown 1000:1000 <文件路径>` 修复。
 4. **端口占用**：预览服务器使用 4000 端口，若冲突先执行停止命令。
-5. **Git 提交规范**：提交信息必须遵循 `.trae/rules/git-commit-message.md` 中的格式。
+5. **Git 提交规范**：提交信息必须遵循 `.agents/rules/git-commit-message.md` 中的格式。
 6. **构建前清理**：部署前务必执行 `hexo clean` 避免缓存问题导致生成内容不更新。
 
 ## 项目信息
@@ -258,4 +258,4 @@ docker compose exec dev pkill -f "hexo server"
 - 站点 URL：`https://0ranan.github.io/`
 - Docker 容器名：`myblog-dev`，服务名：`dev`
 - GitHub Actions 工作流：`.github/workflows/pages.yml`
-- Git 提交规范：`.trae/rules/git-commit-message.md`
+- Git 提交规范：`.agents/rules/git-commit-message.md`

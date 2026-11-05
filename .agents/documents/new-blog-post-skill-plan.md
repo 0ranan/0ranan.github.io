@@ -13,7 +13,7 @@
 - `package.json` 中 `newblog` 脚本: `tsc script/newblog.ts ; node script/newblog.js`
 
 ### 现有技能参考
-- `.trae/skills/learn-shit/SKILL.md` — 唯一的现有技能，使用 YAML front-matter + Markdown body 格式
+- `.agents/skills/learn-shit/SKILL.md` — 唯一的现有技能，使用 YAML front-matter + Markdown body 格式
 
 ### 新建文章的两种方式（README.MD 已记录）
 1. **交互式**: `docker compose exec dev npm run newblog` — 依次询问 title / tags / categories
@@ -30,7 +30,7 @@
 
 ### 新建文件
 
-#### `.trae/skills/new-blog-post/SKILL.md`
+#### `.agents/skills/new-blog-post/SKILL.md`
 
 **内容要点：**
 - **name**: "new-blog-post"
@@ -54,7 +54,7 @@
 
 ## 验证步骤
 
-1. 确认 `.trae/skills/new-blog-post/` 目录已创建
+1. 确认 `.agents/skills/new-blog-post/` 目录已创建
 2. 确认 `SKILL.md` 文件存在且格式正确（有 front-matter）
 3. 确认 name 和 description 字段已正确填写
 4. 确认 body 内容完整覆盖创建文章的完整工作流
